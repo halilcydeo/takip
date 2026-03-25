@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell
 } from "recharts";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 // ── MOCK DATA ─────────────────────────────────────────────────────────────────
 const PLATFORMS = [
@@ -15,72 +21,38 @@ const PLATFORMS = [
 ];
 
 const ACCOUNTS = [
-  { id: 1, name: "TechCorp A.Ş.",     type: "company", avatar: "T", platforms: ["instagram","linkedin","facebook"] },
-  { id: 2, name: "FinCloud Ltd.",      type: "company", avatar: "F", platforms: ["linkedin","twitter","youtube"] },
-  { id: 3, name: "Kuzzat Altay",       type: "personal", avatar: "K", platforms: ["instagram","twitter","linkedin","tiktok","youtube"] },
+  { id: 1, name: "Kuzzat Altay",  type: "personal", avatar: "K", platforms: ["instagram","twitter","youtube","facebook","linkedin"] },
+  { id: 2, name: "Bilginomist",   type: "company",  avatar: "B", platforms: ["instagram","youtube","facebook","twitter","tiktok"] },
+  { id: 3, name: "CYDEO",         type: "company",  avatar: "C", platforms: ["instagram","linkedin","twitter","youtube","tiktok","facebook"] },
+  { id: 4, name: "PlanckVPN",     type: "company",  avatar: "P", platforms: ["instagram","linkedin","twitter","youtube","tiktok","facebook"] },
+  { id: 5, name: "NurPN",         type: "company",  avatar: "N", platforms: ["instagram","linkedin","twitter","youtube","tiktok","facebook"] },
 ];
 
 const TEAM = [
-  { id: 1, name: "Halil Doğan",     role: "Admin",   avatar: "H", email: "halil@company.com",   status: "active" },
-  { id: 2, name: "Ayşe Kaya",       role: "Editor",  avatar: "A", email: "ayse@company.com",    status: "active" },
-  { id: 3, name: "Mert Yılmaz",     role: "Editor",  avatar: "M", email: "mert@company.com",    status: "active" },
-  { id: 4, name: "Selin Arslan",    role: "Viewer",  avatar: "S", email: "selin@company.com",   status: "inactive" },
+  { id: 1, name: "Halil",        role: "Admin",   avatar: "H", email: "halil@cydeo.com",        status: "active" },
+  { id: 2, name: "Kuzzat Altay", role: "Admin",   avatar: "K", email: "kuzzat@bilginomist.com", status: "active" },
+  { id: 3, name: "Editör 1",     role: "Editor",  avatar: "E", email: "editor1@cydeo.com",      status: "active" },
+  { id: 4, name: "Editör 2",     role: "Viewer",  avatar: "E", email: "editor2@cydeo.com",      status: "inactive" },
 ];
 
-const reachData = [
-  { month: "Eki", ig: 42000, li: 18000, tw: 9000, yt: 55000 },
-  { month: "Kas", ig: 47000, li: 21000, tw: 11000, yt: 62000 },
-  { month: "Ara", ig: 51000, li: 19000, tw: 13000, yt: 58000 },
-  { month: "Oca", ig: 58000, li: 24000, tw: 15000, yt: 71000 },
-  { month: "Şub", ig: 62000, li: 27000, tw: 14000, yt: 79000 },
-  { month: "Mar", ig: 71000, li: 31000, tw: 18000, yt: 88000 },
-];
+const reachData = [];
 
-const engageData = [
-  { day: "Pzt", rate: 4.2 },
-  { day: "Sal", rate: 5.1 },
-  { day: "Çar", rate: 3.8 },
-  { day: "Per", rate: 6.3 },
-  { day: "Cum", rate: 7.1 },
-  { day: "Cmt", rate: 5.5 },
-  { day: "Paz", rate: 4.9 },
-];
+const engageData = [];
 
 const platformDist = [
-  { name: "Instagram", value: 38, color: "#E1306C" },
-  { name: "YouTube",   value: 28, color: "#FF0000" },
-  { name: "LinkedIn",  value: 16, color: "#0A66C2" },
-  { name: "Twitter/X", value: 10, color: "#1DA1F2" },
-  { name: "TikTok",    value: 5,  color: "#69C9D0" },
-  { name: "Facebook",  value: 3,  color: "#1877F2" },
+  { name: "Instagram", value: 0, color: "#E1306C" },
+  { name: "YouTube",   value: 0, color: "#FF0000" },
+  { name: "LinkedIn",  value: 0, color: "#0A66C2" },
+  { name: "Twitter/X", value: 0, color: "#1DA1F2" },
+  { name: "TikTok",    value: 0, color: "#69C9D0" },
+  { name: "Facebook",  value: 0, color: "#1877F2" },
 ];
 
-const revenueData = [
-  { month: "Eki", gelir: 42000, abone: 1120 },
-  { month: "Kas", gelir: 48000, abone: 1340 },
-  { month: "Ara", gelir: 45000, abone: 1280 },
-  { month: "Oca", gelir: 53000, abone: 1560 },
-  { month: "Şub", gelir: 61000, abone: 1720 },
-  { month: "Mar", gelir: 68000, abone: 1950 },
-];
+const revenueData = [];
 
-const CALENDAR_POSTS = [
-  { id: 1, title: "Yeni Ürün Lansmanı", platform: "instagram", account: "TechCorp A.Ş.", date: "21 Mar", time: "10:00", status: "scheduled" },
-  { id: 2, title: "CEO Röportajı", platform: "youtube",   account: "Kuzzat Altay",  date: "21 Mar", time: "14:00", status: "scheduled" },
-  { id: 3, title: "Pazar Trendleri", platform: "linkedin",  account: "FinCloud Ltd.", date: "22 Mar", time: "09:30", status: "draft" },
-  { id: 4, title: "Behind the Scenes", platform: "tiktok",   account: "Kuzzat Altay",  date: "22 Mar", time: "18:00", status: "scheduled" },
-  { id: 5, title: "Q1 Başarıları",    platform: "twitter",   account: "TechCorp A.Ş.", date: "23 Mar", time: "11:00", status: "draft" },
-  { id: 6, title: "Ürün Demo Videosu", platform: "youtube",  account: "FinCloud Ltd.", date: "24 Mar", time: "16:00", status: "scheduled" },
-  { id: 7, title: "Takipçi Q&A",      platform: "instagram", account: "Kuzzat Altay",  date: "25 Mar", time: "20:00", status: "scheduled" },
-];
+const CALENDAR_POSTS = [];
 
-const COMMENTS = [
-  { id: 1, author: "emre_tech",    platform: "instagram", text: "Harika içerik, devamını bekliyoruz!", time: "2s önce",   status: "new",      sentiment: "pos" },
-  { id: 2, author: "selin.yilmaz", platform: "linkedin",  text: "Bu konuyu daha detaylı anlatır mısınız?", time: "15d önce", status: "new",      sentiment: "neu" },
-  { id: 3, author: "mehmet_44",    platform: "youtube",   text: "Video biraz uzun olmuş ama güzel.", time: "1s önce",   status: "replied",  sentiment: "neu" },
-  { id: 4, author: "tech_lover99", platform: "twitter",   text: "Bunu paylaşmak zorundayım 🔥",       time: "3s önce",   status: "new",      sentiment: "pos" },
-  { id: 5, author: "anon_user",    platform: "facebook",  text: "Reklam gibi hissettirdi açıkçası.", time: "5s önce",   status: "flagged",  sentiment: "neg" },
-];
+const COMMENTS = [];
 
 // ── STYLES / TOKENS ───────────────────────────────────────────────────────────
 const S = {
@@ -187,10 +159,10 @@ function PageDashboard() {
       {/* KPI Row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
         {[
-          { label: "Toplam Erişim",    value: 340000, delta: "+18%", prefix: "", suffix: "" },
-          { label: "Planlanan İçerik", value: 47,     delta: "+12",  prefix: "", suffix: " post" },
-          { label: "Ort. Etkileşim",  value: "5.4",   delta: "+0.8%",prefix: "", suffix: "%" },
-          { label: "Aktif Hesaplar",  value: 14,      delta: "+2",   prefix: "", suffix: "" },
+          { label: "Toplam Erişim",    value: 0, delta: null, prefix: "", suffix: "" },
+          { label: "Planlanan İçerik", value: 0, delta: null, prefix: "", suffix: " post" },
+          { label: "Ort. Etkileşim",  value: "0", delta: null, prefix: "", suffix: "%" },
+          { label: "Aktif Hesaplar",  value: 5,  delta: null, prefix: "", suffix: "" },
         ].map(k => (
           <Card key={k.label}>
             <Stat {...k} />
@@ -289,54 +261,135 @@ function PageDashboard() {
 }
 
 function PageCalendar() {
+  const [posts, setPosts] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: "", platform: "instagram", account_id: "", scheduled_date: "", scheduled_time: "", status: "draft" });
+
+  useEffect(() => {
+    fetchPosts();
+    supabase.from("accounts").select("*").then(({ data }) => setAccounts(data || []));
+  }, []);
+
+  async function fetchPosts() {
+    setLoading(true);
+    const { data } = await supabase.from("posts").select("*, accounts(name)").order("scheduled_date", { ascending: true });
+    setPosts(data || []);
+    setLoading(false);
+  }
+
+  async function addPost() {
+    if (!form.title || !form.account_id) return;
+    await supabase.from("posts").insert([form]);
+    setForm({ title: "", platform: "instagram", account_id: "", scheduled_date: "", scheduled_time: "", status: "draft" });
+    setShowForm(false);
+    fetchPosts();
+  }
+
+  async function deletePost(id) {
+    await supabase.from("posts").delete().eq("id", id);
+    fetchPosts();
+  }
+
   const statusColor = s => s === "scheduled" ? S.green : s === "draft" ? S.accent : S.textMuted;
   const statusLabel = s => s === "scheduled" ? "Planlandı" : s === "draft" ? "Taslak" : s;
+  const inputStyle = { background: S.surface2, border: `1px solid ${S.border2}`, borderRadius: 8, padding: "8px 12px", color: S.text, fontSize: 13, fontFamily: "Bricolage Grotesque, sans-serif", width: "100%", outline: "none" };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700 }}>İçerik Takvimi</div>
-          <div style={{ fontSize: 13, color: S.textMuted, marginTop: 4 }}>Mart 2026 — 7 planlanmış içerik</div>
+          <div style={{ fontSize: 13, color: S.textMuted, marginTop: 4 }}>{posts.length} planlanmış içerik</div>
         </div>
-        <button style={{
+        <button onClick={() => setShowForm(!showForm)} style={{
           background: S.accent, color: "#000", fontWeight: 700, fontSize: 13,
           border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer",
           fontFamily: "Bricolage Grotesque, sans-serif",
         }}>+ Yeni İçerik</button>
       </div>
 
+      {showForm && (
+        <Card>
+          <SectionTitle>Yeni İçerik Ekle</SectionTitle>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Başlık *</div>
+              <input style={inputStyle} placeholder="İçerik başlığı..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Platform *</div>
+              <select style={inputStyle} value={form.platform} onChange={e => setForm({...form, platform: e.target.value})}>
+                {PLATFORMS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Hesap *</div>
+              <select style={inputStyle} value={form.account_id} onChange={e => setForm({...form, account_id: e.target.value})}>
+                <option value="">Hesap seç...</option>
+                {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Tarih</div>
+              <input style={inputStyle} type="date" value={form.scheduled_date} onChange={e => setForm({...form, scheduled_date: e.target.value})} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Saat</div>
+              <input style={inputStyle} type="time" value={form.scheduled_time} onChange={e => setForm({...form, scheduled_time: e.target.value})} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Durum</div>
+              <select style={inputStyle} value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+                <option value="draft">Taslak</option>
+                <option value="scheduled">Planlandı</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={addPost} style={{ background: S.accent, color: "#000", fontWeight: 700, fontSize: 13, border: "none", borderRadius: 8, padding: "10px 24px", cursor: "pointer", fontFamily: "Bricolage Grotesque, sans-serif" }}>Kaydet</button>
+            <button onClick={() => setShowForm(false)} style={{ background: "transparent", color: S.textMuted, fontSize: 13, border: `1px solid ${S.border2}`, borderRadius: 8, padding: "10px 24px", cursor: "pointer", fontFamily: "Bricolage Grotesque, sans-serif" }}>İptal</button>
+          </div>
+        </Card>
+      )}
+
       <Card style={{ padding: 0, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${S.border}` }}>
-              {["Platform", "İçerik Başlığı", "Hesap", "Tarih", "Saat", "Durum"].map(h => (
-                <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11, fontWeight: 600,
-                  color: S.textMuted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {CALENDAR_POSTS.map((p, i) => (
-              <tr key={p.id} style={{ borderBottom: `1px solid ${S.border}`, background: i % 2 === 0 ? "transparent" : `${S.surface2}80` }}>
-                <td style={{ padding: "14px 20px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 16 }}>{platformIcon(p.platform)}</span>
-                    <span style={{ fontSize: 12, color: platformColor(p.platform), fontWeight: 500 }}>{platformLabel(p.platform)}</span>
-                  </div>
-                </td>
-                <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 500 }}>{p.title}</td>
-                <td style={{ padding: "14px 20px" }}>
-                  <Badge color={S.blue}>{p.account}</Badge>
-                </td>
-                <td style={{ padding: "14px 20px", fontSize: 12, fontFamily: "Fira Code, monospace", color: S.textMuted }}>{p.date}</td>
-                <td style={{ padding: "14px 20px", fontSize: 12, fontFamily: "Fira Code, monospace", color: S.accent }}>{p.time}</td>
-                <td style={{ padding: "14px 20px" }}>
-                  <Badge color={statusColor(p.status)}>{statusLabel(p.status)}</Badge>
-                </td>
+        {loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: S.textMuted }}>Yükleniyor...</div>
+        ) : posts.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center", color: S.textMuted }}>Henüz içerik eklenmedi. "+ Yeni İçerik" ile başlayın.</div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${S.border}` }}>
+                {["Platform", "İçerik Başlığı", "Hesap", "Tarih", "Saat", "Durum", ""].map(h => (
+                  <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 11, fontWeight: 600, color: S.textMuted, letterSpacing: "0.08em", textTransform: "uppercase" }}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {posts.map((p, i) => (
+                <tr key={p.id} style={{ borderBottom: `1px solid ${S.border}`, background: i % 2 === 0 ? "transparent" : `${S.surface2}80` }}>
+                  <td style={{ padding: "14px 20px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>{platformIcon(p.platform)}</span>
+                      <span style={{ fontSize: 12, color: platformColor(p.platform), fontWeight: 500 }}>{platformLabel(p.platform)}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 500 }}>{p.title}</td>
+                  <td style={{ padding: "14px 20px" }}><Badge color={S.blue}>{p.accounts?.name || "—"}</Badge></td>
+                  <td style={{ padding: "14px 20px", fontSize: 12, fontFamily: "Fira Code, monospace", color: S.textMuted }}>{p.scheduled_date || "—"}</td>
+                  <td style={{ padding: "14px 20px", fontSize: 12, fontFamily: "Fira Code, monospace", color: S.accent }}>{p.scheduled_time ? p.scheduled_time.slice(0,5) : "—"}</td>
+                  <td style={{ padding: "14px 20px" }}><Badge color={statusColor(p.status)}>{statusLabel(p.status)}</Badge></td>
+                  <td style={{ padding: "14px 20px" }}>
+                    <button onClick={() => deletePost(p.id)} style={{ background: "transparent", border: "none", color: S.textMuted, cursor: "pointer", fontSize: 16 }}>🗑</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </Card>
     </div>
   );
@@ -348,8 +401,8 @@ function PageSocial() {
       <div style={{ fontSize: 20, fontWeight: 700 }}>Sosyal Medya Performansı</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
         {PLATFORMS.map(pl => {
-          const followers = { instagram: 48200, linkedin: 12400, twitter: 9800, youtube: 31500, tiktok: 7200, facebook: 5600 };
-          const growth    = { instagram: "+4.2%", linkedin: "+7.1%", twitter: "+2.3%", youtube: "+9.8%", tiktok: "+14.3%", facebook: "+1.1%" };
+          const followers = { instagram: 0, linkedin: 0, twitter: 0, youtube: 0, tiktok: 0, facebook: 0 };
+          const growth    = { instagram: "—", linkedin: "—", twitter: "—", youtube: "—", tiktok: "—", facebook: "—" };
           return (
             <Card key={pl.id} style={{ borderTop: `3px solid ${pl.color}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
@@ -401,9 +454,9 @@ function PageRevenue() {
       <div style={{ fontSize: 20, fontWeight: 700 }}>Gelir & Aboneler</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
         {[
-          { label: "Aylık Gelir", value: "68.000 ₺", delta: "+12%", color: S.green },
-          { label: "Aktif Abone", value: "1.950",    delta: "+230", color: S.blue },
-          { label: "Ort. Müşteri Değeri", value: "34,8 ₺", delta: "+4%", color: S.accent },
+          { label: "Aylık Gelir",          value: "0 ₺",   delta: null, color: S.green },
+          { label: "Aktif Abone",          value: "0",     delta: null, color: S.blue },
+          { label: "Ort. Müşteri Değeri",  value: "0 ₺",   delta: null, color: S.accent },
         ].map(k => (
           <Card key={k.label}>
             <div style={{ fontSize: 12, color: S.textMuted, marginBottom: 8 }}>{k.label}</div>
@@ -473,51 +526,108 @@ function PageComments() {
 }
 
 function PageUsers() {
-  const roleColor = r => r === "Admin" ? S.accent : r === "Editor" ? S.blue : S.textMuted;
+  const [team, setTeam] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", role: "viewer" });
+
+  useEffect(() => { fetchTeam(); }, []);
+
+  async function fetchTeam() {
+    setLoading(true);
+    const { data } = await supabase.from("team_members").select("*").order("created_at");
+    setTeam(data || []);
+    setLoading(false);
+  }
+
+  async function addMember() {
+    if (!form.name || !form.email) return;
+    await supabase.from("team_members").insert([{ ...form, status: "active" }]);
+    setForm({ name: "", email: "", role: "viewer" });
+    setShowForm(false);
+    fetchTeam();
+  }
+
+  const roleColor = r => r === "admin" ? S.accent : r === "editor" ? S.blue : S.textMuted;
+  const inputStyle = { background: S.surface2, border: `1px solid ${S.border2}`, borderRadius: 8, padding: "8px 12px", color: S.text, fontSize: 13, fontFamily: "Bricolage Grotesque, sans-serif", width: "100%", outline: "none" };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontSize: 20, fontWeight: 700 }}>Kullanıcı Yönetimi</div>
-        <button style={{
+        <button onClick={() => setShowForm(!showForm)} style={{
           background: S.accent, color: "#000", fontWeight: 700, fontSize: 13,
           border: "none", borderRadius: 8, padding: "10px 20px", cursor: "pointer",
           fontFamily: "Bricolage Grotesque, sans-serif",
-        }}>+ Kullanıcı Davet Et</button>
+        }}>+ Kullanıcı Ekle</button>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-        {TEAM.map(u => (
-          <Card key={u.id} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 12, background: `${S.accent}22`,
-              border: `1px solid ${S.accent}44`, display: "flex", alignItems: "center",
-              justifyContent: "center", fontSize: 16, fontWeight: 700, color: S.accent, flexShrink: 0,
-            }}>{u.avatar}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{u.name}</div>
-              <div style={{ fontSize: 12, color: S.textMuted }}>{u.email}</div>
+
+      {showForm && (
+        <Card>
+          <SectionTitle>Yeni Kullanıcı</SectionTitle>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Ad Soyad *</div>
+              <input style={inputStyle} placeholder="Ad Soyad" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-              <Badge color={roleColor(u.role)}>{u.role}</Badge>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: u.status === "active" ? S.green : S.textMuted }} />
-                <span style={{ fontSize: 11, color: S.textMuted }}>{u.status === "active" ? "Aktif" : "Pasif"}</span>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>E-posta *</div>
+              <input style={inputStyle} placeholder="email@firma.com" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: S.textMuted, marginBottom: 6 }}>Rol</div>
+              <select style={inputStyle} value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
+                <option value="admin">Admin</option>
+                <option value="editor">Editor</option>
+                <option value="viewer">Viewer</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={addMember} style={{ background: S.accent, color: "#000", fontWeight: 700, fontSize: 13, border: "none", borderRadius: 8, padding: "10px 24px", cursor: "pointer", fontFamily: "Bricolage Grotesque, sans-serif" }}>Kaydet</button>
+            <button onClick={() => setShowForm(false)} style={{ background: "transparent", color: S.textMuted, fontSize: 13, border: `1px solid ${S.border2}`, borderRadius: 8, padding: "10px 24px", cursor: "pointer", fontFamily: "Bricolage Grotesque, sans-serif" }}>İptal</button>
+          </div>
+        </Card>
+      )}
+
+      {loading ? (
+        <div style={{ color: S.textMuted, textAlign: "center", padding: 40 }}>Yükleniyor...</div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+          {team.map(u => (
+            <Card key={u.id} style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, background: `${S.accent}22`,
+                border: `1px solid ${S.accent}44`, display: "flex", alignItems: "center",
+                justifyContent: "center", fontSize: 16, fontWeight: 700, color: S.accent, flexShrink: 0,
+              }}>{u.name[0].toUpperCase()}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{u.name}</div>
+                <div style={{ fontSize: 12, color: S.textMuted }}>{u.email}</div>
               </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                <Badge color={roleColor(u.role)}>{u.role}</Badge>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: u.status === "active" ? S.green : S.textMuted }} />
+                  <span style={{ fontSize: 11, color: S.textMuted }}>{u.status === "active" ? "Aktif" : "Pasif"}</span>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function PageSEO() {
   const keywords = [
-    { word: "react eğitimi",       pos: 3,  vol: 4400, trend: "up" },
-    { word: "javascript kursu",    pos: 7,  vol: 8100, trend: "up" },
-    { word: "typescript öğren",    pos: 12, vol: 2900, trend: "stable" },
-    { word: "frontend geliştirici",pos: 5,  vol: 3600, trend: "up" },
-    { word: "bilginomist",         pos: 1,  vol: 1200, trend: "stable" },
-    { word: "online it kursu",     pos: 18, vol: 6600, trend: "down" },
+    { word: "bilginomist",          pos: 1,  vol: 1800, trend: "up" },
+    { word: "cydeo it kursu",       pos: 2,  vol: 3200, trend: "up" },
+    { word: "planck vpn",           pos: 3,  vol: 2100, trend: "up" },
+    { word: "kuzzat altay",         pos: 1,  vol: 4400, trend: "stable" },
+    { word: "nurpn güvenli vpn",    pos: 5,  vol: 1500, trend: "up" },
+    { word: "online it eğitimi",    pos: 11, vol: 6600, trend: "down" },
   ];
   const trendColor = t => t === "up" ? S.green : t === "down" ? S.red : S.textMuted;
   const trendIcon  = t => t === "up" ? "↑" : t === "down" ? "↓" : "→";
@@ -526,9 +636,9 @@ function PageSEO() {
       <div style={{ fontSize: 20, fontWeight: 700 }}>SEO Metrikleri</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
         {[
-          { label: "Ort. Sıralama", value: "7.6", delta: "−2.1", color: S.green },
-          { label: "Organik Trafik", value: "18.400", delta: "+34%", color: S.green },
-          { label: "Takip Edilen KW", value: "6", delta: "+1", color: S.blue },
+          { label: "Ort. Sıralama",    value: "—",  delta: null, color: S.textMuted },
+          { label: "Organik Trafik",   value: "0",  delta: null, color: S.textMuted },
+          { label: "Takip Edilen KW",  value: "0",  delta: null, color: S.blue },
         ].map(k => (
           <Card key={k.label}>
             <div style={{ fontSize: 12, color: S.textMuted, marginBottom: 8 }}>{k.label}</div>
